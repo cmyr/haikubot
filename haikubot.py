@@ -130,7 +130,7 @@ class HaikuBot(object):
         files = [f for f in files if f not in self.processed_files]
         source = files.pop()
         self.processed_files.append(source)
-        return source
+        return '%s/%s' %(DATA_SOURCE_DIR, source)
 
     def _extract_lines(self, source):
         print('extracting lines')

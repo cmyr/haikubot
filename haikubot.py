@@ -42,13 +42,6 @@ class HaikuBot(object):
     def __len__(self):
         return len(self.review)
 
-    def count(self):
-        self._open_datasource()
-        count = len(self.shared_data['to_post'])
-        self._close_datasource()
-        return count
-
-
     def _load(self, for_review=True):
         # if we have existing state, open it up.
         try:
@@ -77,16 +70,21 @@ class HaikuBot(object):
         
 
     def run(self, review=False, source=None):
+        if not acquire_lock():
+            print('failed to acquire lock')
+            return
+        try:
+            if not len(self.review):
+                if not source:
+                    source = self._get_source()
+                lines = self._extract_lines(source)
+                self.review = self._generate_haiku(lines)
+            if review:
+                simple_gui(self)
 
-        if not len(self.review):
-            if not source:
-                source = self._get_source()
-            lines = self._extract_lines(source)
-            self.review = self._generate_haiku(lines)
-        if review:
-            simple_gui(self)
-
-        self._close()
+            self._close()
+        finally:    
+            release_lock()
 
     def approve(self, haiku):
         print('approved')
@@ -97,49 +95,6 @@ class HaikuBot(object):
 
     def remove(self, haiku):
         self.review.remove(haiku)
-
-    def _open_datasource(self):
-        success = acquire_lock()
-        while not success:
-            print('waiting for lock')
-            time.sleep(30)
-            success = acquire_lock()
-
-        self._load(False)
-        return True
-
-    def _close_datasource(self):
-        self.shared_data.close()
-        release_lock()
-        return True
-
-    def haiku_for_post(self):
-        """
-        returns the next approved haiku to be posted
-        """
-        if not self._open_datasource():
-            return
-        try:
-            haiku = self.shared_data['to_post'][0]
-        except IndexError:
-            haiku = None
-
-        self._close_datasource()
-        return haiku
-
-    def post_failed(self, haiku):
-        self._open_datasource()
-        self.shared_data['to_post'].remove(haiku)
-        haiku['status'] = HAIKU_STATUS_FAILED
-        self.shared_data['processed'].append(haiku)
-        self._close_datasource()
-
-    def post_succeeded(self, haiku):
-        self._open_datasource()
-        self.shared_data['to_post'].remove(haiku)
-        haiku['status'] = HAIKU_STATUS_POSTED
-        self.shared_data['processed'].append(haiku)
-        self._close_datasource()
 
     def _generate_haiku(self, lines):
 
@@ -198,6 +153,59 @@ class HaikuBot(object):
         db.close()
         return [(x['text'], x['id']) for x in lines]
 
+# things below this are related to the 'public API' our daemon
+# uses to find and post and confirm posting, etc
+
+    def count(self):
+        """returns how many haiku are awaiting posting"""
+        self._open_datasource()
+        count = len(self.shared_data['to_post'])
+        self._close_datasource()
+        return count
+
+    def _open_datasource(self):
+        success = acquire_lock()
+        while not success:
+            print('waiting for lock')
+            time.sleep(30)
+            success = acquire_lock()
+
+        self._load(False)
+        return True
+
+    def _close_datasource(self):
+        self.shared_data.close()
+        release_lock()
+        return True
+
+    def haiku_for_post(self):
+        """
+        returns the next approved haiku to be posted
+        """
+        if not self._open_datasource():
+            return
+        try:
+            haiku = self.shared_data['to_post'][0]
+        except IndexError:
+            haiku = None
+
+        self._close_datasource()
+        return haiku
+
+    def post_failed(self, haiku):
+        self._open_datasource()
+        self.shared_data['to_post'].remove(haiku)
+        haiku['status'] = HAIKU_STATUS_FAILED
+        self.shared_data['processed'].append(haiku)
+        self._close_datasource()
+
+    def post_succeeded(self, haiku):
+        self._open_datasource()
+        self.shared_data['to_post'].remove(haiku)
+        haiku['status'] = HAIKU_STATUS_POSTED
+        self.shared_data['processed'].append(haiku)
+        self._close_datasource()
+
 
 
 def _tweet_from_dbm(dbm_tweet):
@@ -210,6 +218,9 @@ def _tweet_from_dbm(dbm_tweet):
 
 
 def simple_gui(model):
+    """
+    cli utility for reviewing generated haiku
+    """
     to_review = iter(model.review)
     h = to_review.next()
 
@@ -251,23 +262,30 @@ def release_lock():
 
 
 def main():
-    if not acquire_lock():
-        print('failed to acquire lock')
-        sys.exit(1)
-    try:
-        import argparse
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-s', '--source', type=str, help="source file (mostly for debugging)")
-        parser.add_argument('-r', '--review', help='review hits (CLI)', action="store_true")
-        parser.add_argument('--debug', help='run with debug settings', action="store_true")
-        args = parser.parse_args()
 
-        if args.debug:
-            source = ''
-            h = HaikuBot()
-            h.run(True, source)
-    finally:
-        release_lock()
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--source', type=str, help="source file (mostly for debugging)")
+    parser.add_argument('-r', '--review', help='review hits (CLI)', action="store_true")
+    parser.add_argument('--debug', help='run with debug settings', action="store_true")
+    parser.add_argument('--test-sources', action="store_true")
+    args = parser.parse_args()
+
+    # if args.debug:
+    #     # source = ''
+    #     h = HaikuBot()
+    #     h.run(True, source)
+
+    if args.test_sources:
+        h = HaikuBot()
+        print(h._get_source())
+
+    else:
+        # normal run
+        h = HaikuBot()
+        h.run(review=args.review)
+
 
 
 if __name__ == "__main__":

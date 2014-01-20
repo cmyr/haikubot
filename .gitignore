@@ -1,0 +1,4 @@
+*.dat
+*.pyc
+haikucreds.py
+.DS_Store

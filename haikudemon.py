@@ -133,7 +133,7 @@ class HaikuDemon(object):
         except TwitterError as err:
             print(err)
 
-    def check_count(self, count):
+    def _check_count(self, count):
         """checks to see if we're close to running out of haiku to tweet"""
 
         good_until = count * self.post_interval

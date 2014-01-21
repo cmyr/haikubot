@@ -12,7 +12,7 @@ from twitter.stream import TwitterStream
 from twitter.api import Twitter, TwitterError, TwitterHTTPError
 
 from haikucreds import (CONSUMER_KEY, CONSUMER_SECRET,
-                          ACCESS_KEY, ACCESS_SECRET)
+                          ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
 
 
 POST_INTERVAL = 240 
@@ -35,6 +35,8 @@ class HaikuDemon(object):
                 CONSUMER_KEY,
                 CONSUMER_SECRET),
             api_version='1.1')
+        self.sent_warnings = (False, False, False)
+        self.warning_level = 0
         
     def run(self):
         while True:
@@ -44,6 +46,7 @@ class HaikuDemon(object):
     def entertain_the_huddled_masses(self):
 
         count = self.datasource.count()
+        self._check_count(count)
         print('datasource count = %d' % count)
         if not count:
             return
@@ -114,9 +117,74 @@ class HaikuDemon(object):
     def sleep(self):
         randfactor = random.randrange(0, self.post_interval)
         sleep_interval = self.post_interval * 0.5 + randfactor
-        time.sleep(sleep_interval)
-        pass
 
+        print('sleeping for %d minutes' % sleep_interval / 60)
+        while sleep_interval > 0:
+            time.sleep(60)
+            sleep_interval -= 60
+            sys.stdout.write('%d\r' % sleep_interval)
+            sys.stdout.flush()
+        print('\n')
+
+    def send_dm(self, message):
+        """sends me a DM if I'm running out of haiku"""
+        try:
+            self.twitter.direct_messages.new(user=BOSS_USERNAME, text=message)
+        except TwitterError as err:
+            print(err)
+
+    def check_count(self, count):
+        """checks to see if we're close to running out of haiku to tweet"""
+
+        good_until = count * self.post_interval
+        message = 'haikubot will run out of haiku in %s' % format_seconds(good_until)
+        should_post = False
+        if good_until == 0 and self.warning_level < 4:
+            message = 'EMPTY!'
+            should_post = True
+            self.warning_level = 4
+        elif good_until > 0 and self.warning_level == 4:
+            self.warning_level = 0
+
+
+        if good_until < 24 * 60 * 60 and self.warning_level < 3:
+            message = 'ONE DAY: ' + message
+            should_post = True
+            self.warning_level = 3
+        elif good_until < 72 * 60 * 60 and self.warning_level < 2:
+            message = 'Three days: ' + message
+            should_post = True
+            self.warning_level = 2
+        elif good_until < 168 * 60 * 60 and self.warning_level < 1:
+            message = 'One week: ' + message
+            should_post = True
+        elif good_until > 168 * 60 * 60:
+            self.warning_level = 0
+
+
+            # this... is not my proudest hour
+        if should_post:
+            if self._debug:
+                print(message)
+        else:
+            self.send_dm(message)
+        
+
+
+
+def format_seconds(seconds):
+    """
+    convert a number of seconds into a custom string representation
+    """
+    d, seconds = divmod(seconds, (60*60*24))
+    h, seconds = divmod(seconds, (60*60))
+    m, seconds = divmod(seconds, 60)
+    time_string = ("%im %0.2fs" % (m, seconds))
+    if h or d:
+        time_string = "%ih %s" % (h, time_string)
+    if d:
+        time_string = "%id %s" % (d, time_string)
+    return time_string
 
 
 

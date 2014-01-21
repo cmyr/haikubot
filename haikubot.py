@@ -163,7 +163,7 @@ class HaikuBot(object):
 
             for h in fails:
                 self.review.remove(h)
-                
+
             print('\nfiltered %d haiku' % count)
         
         finally:    
@@ -252,6 +252,7 @@ class HaikuBot(object):
 
     def post_succeeded(self, haiku):
         self._open_datasource()
+        self.shared_data['last_post'] = time.time()
         self.shared_data['to_post'].remove(haiku)
         haiku['status'] = HAIKU_STATUS_POSTED
         self.shared_data['processed'].append(haiku)

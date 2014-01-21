@@ -132,13 +132,13 @@ class HaikuBot(object):
         # if not isinstance(line, basestring):
         #     print('_filter_line passed %s' % type(line))
         #     return False
-        if poetryutils.low_letter_ratio(line[0]):
+        if poetryutils.low_letter_ratio(line):
             return False
-        if poetryutils.contains_url(line[0]):
+        if poetryutils.contains_url(line):
             return False
-        if re.search(r'[0-9]', line[0]):
+        if re.search(r'[0-9]', line):
             return False
-        # if re.search(r'\n', line[0].strip()):
+        # if re.search(r'\n', line.strip()):
         #     return False
         return True
 
@@ -188,8 +188,7 @@ class HaikuBot(object):
             prevk = k
             try:
                 line = _tweet_from_dbm(db[k])
-                line = (line['text'], line['id'])
-                if self._filter_line(line):
+                if self._filter_line(line['text']):
                     lines.append(line)
             except ValueError:
                 k = db.nextkey(k)
@@ -199,7 +198,7 @@ class HaikuBot(object):
 
             k = db.nextkey(k)
         db.close()
-        return lines
+        return [(l['text'], l['id']) for l in lines]
 
 # things below this are related to the 'public API' our daemon
 # uses to find and post and confirm posting, etc

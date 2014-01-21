@@ -163,7 +163,7 @@ class HaikuBot(object):
             print('\nfiltered %d haiku' % count)
         
         finally:    
-            self._close()
+            self._close(True)
             release_lock()
 
         

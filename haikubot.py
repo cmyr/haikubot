@@ -137,7 +137,21 @@ class HaikuBot(object):
             return False
         if re.search(r'[0-9]', line[0]):
             return False
+        # if re.search(r'\n', line[0].strip()):
+        #     return False
         return True
+
+    def _refilter_haiku(self):
+        self._open_datasource()
+        print('refiltering haiku')
+        count = 0
+        for h in self.review:
+            if not _filter_line(h['text']):
+                self.review.remove(h)
+                count += 1
+
+        print('filtered %d haiku' % count)
+        self._close_datasource()
 
     def _get_source(self):
         files = os.listdir(DATA_SOURCE_DIR)
@@ -288,7 +302,12 @@ def main():
     parser.add_argument('-r', '--review', help='review hits (CLI)', action="store_true")
     parser.add_argument('--debug', help='run with debug settings', action="store_true")
     parser.add_argument('--test-sources', action="store_true")
+    parser.add_argument('--refilter', help='reapply filters to processed haiku', action="store_true")
     args = parser.parse_args()
+
+    if args.refilter:
+        h = HaikuBot(False)
+        h._refilter_haiku()
 
     if args.debug:
         source = '/Users/cmyr/Dev/projects/anagramer/data/anagrammdbmen.db/Oct071635'

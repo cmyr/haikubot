@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import time
-import haikubot
+import sys
 import shelve
 import random
 import json
@@ -11,6 +11,7 @@ from twitter.oauth import OAuth
 from twitter.stream import TwitterStream
 from twitter.api import Twitter, TwitterError, TwitterHTTPError
 
+import haikubot
 from haikucreds import (CONSUMER_KEY, CONSUMER_SECRET,
                           ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
 

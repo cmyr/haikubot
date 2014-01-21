@@ -83,8 +83,9 @@ class HaikuBot(object):
             if review:
                 simple_gui(self)
 
-            self._close()
+            
         finally:    
+            self._close()
             release_lock()
 
     def approve(self, haiku):
@@ -142,16 +143,31 @@ class HaikuBot(object):
         return True
 
     def _refilter_haiku(self):
-        self._open_datasource()
-        print('refiltering haiku')
-        count = 0
-        for h in self.review:
-            if not _filter_line(h['text']):
-                self.review.remove(h)
-                count += 1
+        
+        if not acquire_lock():
+            print('failed to acquire lock')
+            return
+        try:
+            print('refiltering haiku')
+            seen = 0
+            count = 0
+            for h in self.review:
+                seen += 1
+                if not self._filter_line(h['text']):
+                    self.review.remove(h)
+                    count += 1
 
-        print('filtered %d haiku' % count)
-        self._close_datasource()
+                sys.stdout.write('seen/filtered %d/%d\r' % (seen,count))
+                sys.stdout.flush()
+
+            print('\nfiltered %d haiku' % count)
+        
+        finally:    
+            self._close()
+            release_lock()
+
+        
+        
 
     def _get_source(self):
         files = os.listdir(DATA_SOURCE_DIR)
@@ -306,7 +322,7 @@ def main():
     args = parser.parse_args()
 
     if args.refilter:
-        h = HaikuBot(False)
+        h = HaikuBot()
         h._refilter_haiku()
 
     if args.debug:

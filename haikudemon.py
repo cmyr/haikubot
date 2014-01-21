@@ -54,24 +54,30 @@ class HaikuDemon(object):
 
         haiku = self.datasource.haiku_for_post()
         formatted_haiku = self.format_haiku(haiku)
-        if not formatted_haiku:
-            print('failed to format haiku?')
-            return
-        if self.post(formatted_haiku):
+
+        if formatted_haiku and self.post(formatted_haiku):
             self.datasource.post_succeeded(haiku)
         else:
             self.datasource.post_failed(haiku)
+            self.entertain_the_huddled_masses()
 
     def format_haiku(self, haiku):
-        if not self._debug:
-            usernames = self.get_user_names(haiku['tweets'])
-        else:
-            usernames = ('user1', 'user2', 'user3')
+        try:
+            if not self._debug:
+                usernames = self.get_user_names(haiku['tweets'])
+            else:
+                usernames = ('user1', 'user2', 'user3')
 
-        usernames = ['@%s' % n for n in usernames]
-        usernames_string = u'– ' + ' / '.join(usernames)
-        formatted_haiku = '%s\n\n%s' % (haiku['text'], usernames_string)
-        return formatted_haiku
+            usernames = ['@%s' % n for n in usernames]
+            usernames_string = u'– ' + ' / '.join(usernames)
+            formatted_haiku = '%s\n\n%s' % (haiku['text'], usernames_string)
+            return formatted_haiku
+        
+        except TwitterError as err:
+            response = json.JSONDecoder().decode(err.response_data)
+            response = response.get('errors')
+            print(response)
+            return None
 
     def get_user_names(self, tweets):
         usernames = []

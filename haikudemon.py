@@ -128,13 +128,17 @@ class HaikuDemon(object):
     def sleep(self):
         randfactor = random.randrange(0, self.post_interval)
         sleep_interval = self.post_interval * 0.5 + randfactor
+        sleep_chunk = 10  #seconds
 
         print('sleeping for %d minutes' % (sleep_interval / 60))
+        
         while sleep_interval > 0:
-            time.sleep(60)
-            sleep_interval -= 60
-            sys.stdout.write('%d\r' % sleep_interval)
+            sleep_status = ' %s remaining \r' % (format_seconds(sleep_interval))
+            sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
+            time.sleep(sleep_chunk)
+            sleep_interval -= sleep_chunk
+            
         print('\n')
 
     def send_dm(self, message):

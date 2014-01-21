@@ -26,7 +26,7 @@ class HaikuDemon(object):
     """
     def __init__(self, post_interval=POST_INTERVAL, debug=False):
         super(HaikuDemon, self).__init__()
-        self.datasource = haikubot.Haikunator(review=False)
+        self.datasource = haikubot.HaikuBot(review=False)
         self._debug = debug
         self.post_interval = post_interval * 60
         self.twitter = twitter = Twitter(

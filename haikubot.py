@@ -151,15 +151,19 @@ class HaikuBot(object):
             print('refiltering haiku')
             seen = 0
             count = 0
+            fails = []
             for h in self.review:
                 seen += 1
                 if not self._filter_line(h['text']):
-                    self.review.remove(h)
+                    fails.append(h)
                     count += 1
 
                 sys.stdout.write('seen/filtered %d/%d\r' % (seen,count))
                 sys.stdout.flush()
 
+            for h in fails:
+                self.review.remove(h)
+                
             print('\nfiltered %d haiku' % count)
         
         finally:    

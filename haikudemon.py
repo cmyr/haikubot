@@ -84,6 +84,10 @@ class HaikuDemon(object):
         return usernames
 
     def post(self, formatted_haiku):
+        if self._debug:
+            print(formatted_haiku)
+            return True
+
         try:
             success = self.twitter.statuses.update(status=formatted_haiku)
             print('posted haiku:\n\n%s' % formatted_haiku)
@@ -118,7 +122,7 @@ class HaikuDemon(object):
         randfactor = random.randrange(0, self.post_interval)
         sleep_interval = self.post_interval * 0.5 + randfactor
 
-        print('sleeping for %d minutes' % sleep_interval / 60)
+        print('sleeping for %d minutes' % (sleep_interval / 60))
         while sleep_interval > 0:
             time.sleep(60)
             sleep_interval -= 60

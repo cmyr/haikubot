@@ -21,7 +21,7 @@ POST_INTERVAL = 240
 class HaikuDemon(object):
     """
     I sit idle, calm
-    waiting for the bell that wakes
+    waiting for the call that wakes
     so I may hold forth
     """
     def __init__(self, post_interval=POST_INTERVAL, debug=False):

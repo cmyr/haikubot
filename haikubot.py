@@ -58,6 +58,7 @@ class HaikuBot(object):
                 self.review = data['haiku']
                 self.processed_files = data['processed']
             except IOError:
+                print('no review data found')
                 return
 
 
@@ -100,10 +101,12 @@ class HaikuBot(object):
 
         haikus = list()
 
-        lines = [l for l in lines if not poetryutils.contains_url(l[0])]
         # these are tuples, now
         fives = [(x,y) for x,y in lines if poetryutils.count_syllables(x) == 5]
         sevens = [(x,y) for x,y in lines if poetryutils.count_syllables(x) == 7]
+        
+        del lines
+
         random.shuffle(fives)
         random.shuffle(sevens)
 
@@ -124,6 +127,17 @@ class HaikuBot(object):
         ids = tuple([y for x,y in haiku])
         return {'text': text, 'tweets': ids, 'status':HAIKU_STATUS_NEW}
 
+    def _filter_line(self, line):
+        # if not isinstance(line, basestring):
+        #     print('_filter_line passed %s' % type(line))
+        #     return False
+        if poetryutils.low_letter_ratio(line[0]):
+            return False
+        if poetryutils.contains_url(line[0]):
+            return False
+        if re.search(r'[0-9]', line[0]):
+            return False
+        return True
 
     def _get_source(self):
         files = os.listdir(DATA_SOURCE_DIR)
@@ -143,7 +157,10 @@ class HaikuBot(object):
             seen += 1
             prevk = k
             try:
-                lines.append(_tweet_from_dbm(db[k]))
+                line = _tweet_from_dbm(db[k])
+                line = (line['text'], line['id'])
+                if self._filter_line(line):
+                    lines.append(line)
             except ValueError:
                 k = db.nextkey(k)
                 continue
@@ -152,7 +169,7 @@ class HaikuBot(object):
 
             k = db.nextkey(k)
         db.close()
-        return [(x['text'], x['id']) for x in lines]
+        return lines
 
 # things below this are related to the 'public API' our daemon
 # uses to find and post and confirm posting, etc
@@ -273,10 +290,10 @@ def main():
     parser.add_argument('--test-sources', action="store_true")
     args = parser.parse_args()
 
-    # if args.debug:
-    #     # source = ''
-    #     h = HaikuBot()
-    #     h.run(True, source)
+    if args.debug:
+        source = '/Users/cmyr/Dev/projects/anagramer/data/anagrammdbmen.db/Oct071635'
+        h = HaikuBot()
+        h.run(True, source)
 
     if args.test_sources:
         h = HaikuBot()

@@ -140,7 +140,7 @@ class HaikuBot(object):
             return False
         if re.search(r'[0-9]', line):
             return False
-        if line.find('#'):
+        if line.find('#') > 0:
             return False
         # if re.search(r'\n', line.strip()):
         #     return False
@@ -175,10 +175,18 @@ class HaikuBot(object):
             release_lock()
 
     def _get_source(self):
-        files = os.listdir(DATA_SOURCE_DIR)
-        files = [f for f in files if f not in self.processed_files]
-        source = files.pop()
+
+        ls = (os.path.join(DATA_SOURCE_DIR, i) for i in os.listdir(DATA_SOURCE_DIR))
+        ls = ((os.stat(path), path) for path in ls) 
+        ls = ((stat[ST_CTIME], path) for stat, path in ls)
+        dbses = [path for stat, path in sorted(ls)]
+
+
+        # files = os.listdir(DATA_SOURCE_DIR)
+        # files = [f for f in files if f not in self.processed_files]
+        source = dbses.pop()
         self.processed_files.append(source)
+        print('working from source %s' % source)
         return '%s/%s' % (DATA_SOURCE_DIR, source)
 
     def _extract_lines(self, source):

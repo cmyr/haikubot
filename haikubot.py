@@ -217,11 +217,14 @@ class HaikuBot(object):
 
     def last_post(self):
         self._open_datasource()
+        post_time = 0
         try:
-            return self.shared_data['last_post']
+            post_time = self.shared_data['last_post']
         except KeyError:
-            return 0
+            pass
+        
         self._close_datasource()
+        return post_time
 
     def _open_datasource(self):
         success = acquire_lock()

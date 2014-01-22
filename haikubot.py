@@ -142,11 +142,13 @@ class HaikuBot(object):
             return False
         if line.find('#') > 0:
             return False
-        # if re.search(r'\n', line.strip()):
-        #     return False
+        if re.search(r'oomf', line.lower()):
+            return False
+        if re.search(r'\n', line.strip()):
+            return False
         return True
 
-    def _refilter_haiku(self):
+    def _refilter_haiku(self, debug=False):
 
         if not acquire_lock():
             print('failed to acquire lock')
@@ -158,15 +160,18 @@ class HaikuBot(object):
             fails = []
             for h in self.review:
                 seen += 1
-                if not self._filter_line(h['text']):
+                lines = h['text'].splitlines()
+                results = map(self._filter_line, lines)
+                if False in lines:
                     fails.append(h)
                     count += 1
 
                 sys.stdout.write('seen/filtered %d/%d\r' % (seen, count))
                 sys.stdout.flush()
 
-            for h in fails:
-                self.review.remove(h)
+            if not debug:
+                for h in fails:
+                    self.review.remove(h)
 
             print('\nfiltered %d haiku' % count)
 
@@ -189,7 +194,7 @@ class HaikuBot(object):
         source = dbses.pop()
         self.processed_files.append(source)
         print('working from source %s' % source)
-        return '%s/%s' % (DATA_SOURCE_DIR, source)
+        return source
 
     def _extract_lines(self, source):
         print('extracting lines')

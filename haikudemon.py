@@ -137,6 +137,7 @@ class HaikuDemon(object):
                 return False
 
     def sleep(self, interval):
+        interval = int(interval)
         randfactor = random.randrange(0, interval)
         interval = interval * 0.5 + randfactor
         sleep_chunk = 10  # seconds

@@ -24,11 +24,13 @@ HAIKU_STATUS_FAILED = 'failed'
 
 
 class HaikuBot(object):
+
     """
     you twitter poets
     beauty is your lost verses
     I find them. save them.
     """
+
     def __init__(self, review=True):
         super(HaikuBot, self).__init__()
         self.processed_files = list()
@@ -45,13 +47,15 @@ class HaikuBot(object):
     def _load(self, for_review=True):
         # if we have existing state, open it up.
         try:
-            self.shared_data = shelve.open(SHARED_DATA_FILE, 'w', writeback=True)
+            self.shared_data = shelve.open(
+                SHARED_DATA_FILE, 'w', writeback=True)
         except anydbm.error:
             print('error loading shared data')
-            self.shared_data = shelve.open(SHARED_DATA_FILE, 'c', writeback=True)
+            self.shared_data = shelve.open(
+                SHARED_DATA_FILE, 'c', writeback=True)
             self.shared_data['to_post'] = list()
             self.shared_data['processed'] = list()
-        
+
         if for_review:
             try:
                 data = pickle.load(open(HAIKU_REVIEW_FILE, 'r'))
@@ -61,14 +65,12 @@ class HaikuBot(object):
                 print('no review data found')
                 return
 
-
     def _close(self, for_review=True):
         print('closing')
         self.shared_data.close()
         if for_review:
             d = {'haiku': self.review, 'processed': self.processed_files}
             pickle.dump(d, open(HAIKU_REVIEW_FILE, 'w'))
-        
 
     def run(self, review=False, source=None):
         if not acquire_lock():
@@ -83,8 +85,7 @@ class HaikuBot(object):
             if review:
                 simple_gui(self)
 
-            
-        finally:    
+        finally:
             self._close()
             release_lock()
 
@@ -94,7 +95,6 @@ class HaikuBot(object):
         haiku['status'] = HAIKU_STATUS_APPROVED
         self.shared_data['to_post'].append(haiku)
 
-
     def remove(self, haiku):
         self.review.remove(haiku)
 
@@ -103,9 +103,11 @@ class HaikuBot(object):
         haikus = list()
 
         # these are tuples, now
-        fives = [(x,y) for x,y in lines if poetryutils.count_syllables(x) == 5]
-        sevens = [(x,y) for x,y in lines if poetryutils.count_syllables(x) == 7]
-        
+        fives = [(x, y)
+                 for x, y in lines if poetryutils.count_syllables(x) == 5]
+        sevens = [(x, y)
+                  for x, y in lines if poetryutils.count_syllables(x) == 7]
+
         del lines
 
         random.shuffle(fives)
@@ -125,8 +127,8 @@ class HaikuBot(object):
         text = [x for x, y in haiku]
         text = '\n'.join(text)
 
-        ids = tuple([y for x,y in haiku])
-        return {'text': text, 'tweets': ids, 'status':HAIKU_STATUS_NEW}
+        ids = tuple([y for x, y in haiku])
+        return {'text': text, 'tweets': ids, 'status': HAIKU_STATUS_NEW}
 
     def _filter_line(self, line):
         # if not isinstance(line, basestring):
@@ -143,7 +145,7 @@ class HaikuBot(object):
         return True
 
     def _refilter_haiku(self):
-        
+
         if not acquire_lock():
             print('failed to acquire lock')
             return
@@ -158,27 +160,24 @@ class HaikuBot(object):
                     fails.append(h)
                     count += 1
 
-                sys.stdout.write('seen/filtered %d/%d\r' % (seen,count))
+                sys.stdout.write('seen/filtered %d/%d\r' % (seen, count))
                 sys.stdout.flush()
 
             for h in fails:
                 self.review.remove(h)
 
             print('\nfiltered %d haiku' % count)
-        
-        finally:    
+
+        finally:
             self._close(True)
             release_lock()
-
-        
-        
 
     def _get_source(self):
         files = os.listdir(DATA_SOURCE_DIR)
         files = [f for f in files if f not in self.processed_files]
         source = files.pop()
         self.processed_files.append(source)
-        return '%s/%s' %(DATA_SOURCE_DIR, source)
+        return '%s/%s' % (DATA_SOURCE_DIR, source)
 
     def _extract_lines(self, source):
         print('extracting lines')
@@ -259,7 +258,6 @@ class HaikuBot(object):
         self._close_datasource()
 
 
-
 def _tweet_from_dbm(dbm_tweet):
     tweet_values = re.split(unichr(0017), dbm_tweet.decode('utf-8'))
     t = dict()
@@ -296,8 +294,8 @@ def simple_gui(model):
             h = None
 
 
-
 LOCK_FILE = 'haiku.lock'
+
 
 def acquire_lock():
     if os.access(LOCK_FILE, os.F_OK):
@@ -315,14 +313,17 @@ def release_lock():
 
 def main():
 
-
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--source', type=str, help="source file (mostly for debugging)")
-    parser.add_argument('-r', '--review', help='review hits (CLI)', action="store_true")
-    parser.add_argument('--debug', help='run with debug settings', action="store_true")
+    parser.add_argument(
+        '-s', '--source', type=str, help="source file (mostly for debugging)")
+    parser.add_argument(
+        '-r', '--review', help='review hits (CLI)', action="store_true")
+    parser.add_argument(
+        '--debug', help='run with debug settings', action="store_true")
     parser.add_argument('--test-sources', action="store_true")
-    parser.add_argument('--refilter', help='reapply filters to processed haiku', action="store_true")
+    parser.add_argument(
+        '--refilter', help='reapply filters to processed haiku', action="store_true")
     args = parser.parse_args()
 
     if args.refilter:
@@ -342,7 +343,6 @@ def main():
         # normal run
         h = HaikuBot()
         h.run(review=args.review)
-
 
 
 if __name__ == "__main__":

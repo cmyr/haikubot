@@ -13,18 +13,20 @@ from twitter.api import Twitter, TwitterError, TwitterHTTPError
 
 import haikubot
 from haikucreds import (CONSUMER_KEY, CONSUMER_SECRET,
-                          ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
+                        ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
 
 
-POST_INTERVAL = 240 
+POST_INTERVAL = 240
 
 
 class HaikuDemon(object):
+
     """
     I sit idle, calm
     waiting for the call that wakes
     so I may hold forth
     """
+
     def __init__(self, post_interval=POST_INTERVAL, debug=False):
         super(HaikuDemon, self).__init__()
         self.datasource = haikubot.HaikuBot(review=False)
@@ -32,13 +34,13 @@ class HaikuDemon(object):
         self.post_interval = post_interval * 60
         self.twitter = twitter = Twitter(
             auth=OAuth(ACCESS_KEY,
-                ACCESS_SECRET,
-                CONSUMER_KEY,
-                CONSUMER_SECRET),
+                       ACCESS_SECRET,
+                       CONSUMER_KEY,
+                       CONSUMER_SECRET),
             api_version='1.1')
         self.sent_warnings = (False, False, False)
         self.warning_level = 0
-        
+
     def run(self):
         while True:
             self.entertain_the_huddled_masses()
@@ -72,7 +74,7 @@ class HaikuDemon(object):
             usernames_string = u'– ' + ' / '.join(usernames)
             formatted_haiku = '%s\n\n%s' % (haiku['text'], usernames_string)
             return formatted_haiku
-        
+
         except TwitterError as err:
             response = json.JSONDecoder().decode(err.response_data)
             response = response.get('errors')
@@ -101,7 +103,7 @@ class HaikuDemon(object):
             return success
         except TwitterError as err:
             http_code = err.e.code
-            
+
             if http_code == 403:
                 # get the response from the error:
                 response = json.JSONDecoder().decode(err.response_data)
@@ -116,7 +118,7 @@ class HaikuDemon(object):
                         return True
                     else:
                         print('unknown error code: %d' % error_code)
-            
+
             else:
                 # if http_code is *not* 403:
                 print('received http response %d' % http_code)
@@ -124,21 +126,21 @@ class HaikuDemon(object):
                 time.sleep(600)
                 return False
 
-
     def sleep(self):
         randfactor = random.randrange(0, self.post_interval)
         sleep_interval = self.post_interval * 0.5 + randfactor
-        sleep_chunk = 10  #seconds
+        sleep_chunk = 10  # seconds
 
         print('sleeping for %d minutes' % (sleep_interval / 60))
-        
+
         while sleep_interval > 0:
-            sleep_status = ' %s remaining \r' % (format_seconds(sleep_interval))
+            sleep_status = ' %s remaining \r' % (
+                format_seconds(sleep_interval))
             sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
             time.sleep(sleep_chunk)
             sleep_interval -= sleep_chunk
-            
+
         print('\n')
 
     def send_dm(self, message):
@@ -152,7 +154,8 @@ class HaikuDemon(object):
         """checks to see if we're close to running out of haiku to tweet"""
 
         good_until = count * self.post_interval
-        message = 'haikubot will run out of haiku in %s' % format_seconds(good_until)
+        message = 'haikubot will run out of haiku in %s' % format_seconds(
+            good_until)
         should_post = False
         if good_until == 0 and self.warning_level < 4:
             message = 'EMPTY!'
@@ -160,7 +163,6 @@ class HaikuDemon(object):
             self.warning_level = 4
         elif good_until > 0 and self.warning_level == 4:
             self.warning_level = 0
-
 
         if good_until < 24 * 60 * 60 and self.warning_level < 3:
             message = 'ONE DAY: ' + message
@@ -176,23 +178,20 @@ class HaikuDemon(object):
         elif good_until > 168 * 60 * 60:
             self.warning_level = 0
 
-
-            # this... is not my proudest hour
+        # this... is not my proudest hour
         if should_post:
             if self._debug:
                 print(message)
-        else:
-            self.send_dm(message)
-        
-
+            else:
+                self.send_dm(message)
 
 
 def format_seconds(seconds):
     """
     convert a number of seconds into a custom string representation
     """
-    d, seconds = divmod(seconds, (60*60*24))
-    h, seconds = divmod(seconds, (60*60))
+    d, seconds = divmod(seconds, (60 * 60 * 24))
+    h, seconds = divmod(seconds, (60 * 60))
     m, seconds = divmod(seconds, 60)
     time_string = ("%im %0.2fs" % (m, seconds))
     if h or d:
@@ -202,23 +201,22 @@ def format_seconds(seconds):
     return time_string
 
 
-
 def main():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--post-interval', type=int,
-        help='interval (in minutes) between posts')
-    parser.add_argument('-d', '--debug', 
-        help='run with debug flag', action="store_true")
+                        help='interval (in minutes) between posts')
+    parser.add_argument('-d', '--debug',
+                        help='run with debug flag', action="store_true")
     args = parser.parse_args()
 
     kwargs = {}
     kwargs['debug'] = args.debug
     kwargs['post_interval'] = args.post_interval or POST_INTERVAL
-    
+
     print(kwargs)
     print(type(kwargs['post_interval']))
-    
+
     daemon = HaikuDemon(**kwargs)
     return daemon.run()
 

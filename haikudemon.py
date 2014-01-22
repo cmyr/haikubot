@@ -145,7 +145,7 @@ class HaikuDemon(object):
 
         while interval > 0:
             sleep_status = ' %s remaining \r' % (
-                format_seconds(interval))
+                haikubot.format_seconds(interval))
             sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
             time.sleep(sleep_chunk)
@@ -164,7 +164,7 @@ class HaikuDemon(object):
         """checks to see if we're close to running out of haiku to tweet"""
 
         good_until = count * self.post_interval
-        message = 'haikubot will run out of haiku in %s' % format_seconds(
+        message = 'haikubot will run out of haiku in %s' % haikubot.format_seconds(
             good_until)
         should_post = False
         if good_until == 0 and self.warning_level < 4:
@@ -194,21 +194,6 @@ class HaikuDemon(object):
                 print(message)
             else:
                 self.send_dm(message)
-
-
-def format_seconds(seconds):
-    """
-    convert a number of seconds into a custom string representation
-    """
-    d, seconds = divmod(seconds, (60 * 60 * 24))
-    h, seconds = divmod(seconds, (60 * 60))
-    m, seconds = divmod(seconds, 60)
-    time_string = ("%im %0.2fs" % (m, seconds))
-    if h or d:
-        time_string = "%ih %s" % (h, time_string)
-    if d:
-        time_string = "%id %s" % (d, time_string)
-    return time_string
 
 
 def main():

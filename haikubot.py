@@ -140,6 +140,8 @@ class HaikuBot(object):
             return False
         if re.search(r'[0-9]', line):
             return False
+        if s.find('#'):
+            return False
         # if re.search(r'\n', line.strip()):
         #     return False
         return True
@@ -218,7 +220,7 @@ class HaikuBot(object):
             return self.shared_data['last_post']
         except KeyError:
             return 0
-    
+
     def _open_datasource(self):
         success = acquire_lock()
         while not success:
@@ -277,17 +279,22 @@ def simple_gui(model):
     """
     cli utility for reviewing generated haiku
     """
+    start_time = time.time()
+    seen_count = 1
+    approved_count = 0
     to_review = iter(model.review)
     h = to_review.next()
 
     print('\n%d haiku to review\n' % len(model))
     while h:
+
         # just debug for now
         print(h['text'], '\n')
         while True:
             inp = raw_input('(y/n):')
             if inp.lower() in ['y', 'yes']:
                 model.approve(h)
+                approved_count += 1
                 break
             elif inp.lower() in ['n', 'no']:
                 model.remove(h)
@@ -296,10 +303,32 @@ def simple_gui(model):
                 return
         try:
             h = to_review.next()
+            seen_count += 1
         except StopIteration:
             h = None
 
+    print('approved %d/%d in %s' % (
+        approved_count,
+        seen_count,
+        format_seconds(time.time() - start_time)))
 
+
+def format_seconds(seconds):
+    """
+    convert a number of seconds into a custom string representation
+    """
+    d, seconds = divmod(seconds, (60 * 60 * 24))
+    h, seconds = divmod(seconds, (60 * 60))
+    m, seconds = divmod(seconds, 60)
+    time_string = ("%im %0.2fs" % (m, seconds))
+    if h or d:
+        time_string = "%ih %s" % (h, time_string)
+    if d:
+        time_string = "%id %s" % (d, time_string)
+    return time_string
+
+
+# hacky lockfile stuff so the we don't collide w/ daemon
 LOCK_FILE = 'haiku.lock'
 
 

@@ -42,9 +42,19 @@ class HaikuDemon(object):
         self.warning_level = 0
 
     def run(self):
+        self._check_post_time()
         while True:
             self.entertain_the_huddled_masses()
-            self.sleep()
+            self.sleep(self.post_interval)
+
+    def _check_post_time(self):
+        last_post = self.datasource.last_post()
+        temps_perdu = time.time() - last_post
+        if last_post and temps_perdu < (self.post_interval / 2):
+            print('skipping post. %d elapsed, post_interval %d' %
+                  (temps_perdu, self.post_interval))
+
+            self.sleep(self.post_interval - temps_perdu)
 
     def entertain_the_huddled_masses(self):
 
@@ -126,20 +136,20 @@ class HaikuDemon(object):
                 time.sleep(600)
                 return False
 
-    def sleep(self):
-        randfactor = random.randrange(0, self.post_interval)
-        sleep_interval = self.post_interval * 0.5 + randfactor
+    def sleep(self, interval):
+        randfactor = random.randrange(0, interval)
+        interval = interval * 0.5 + randfactor
         sleep_chunk = 10  # seconds
 
-        print('sleeping for %d minutes' % (sleep_interval / 60))
+        print('sleeping for %d minutes' % (interval / 60))
 
-        while sleep_interval > 0:
+        while interval > 0:
             sleep_status = ' %s remaining \r' % (
-                format_seconds(sleep_interval))
+                format_seconds(interval))
             sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
             time.sleep(sleep_chunk)
-            sleep_interval -= sleep_chunk
+            interval -= sleep_chunk
 
         print('\n')
 

@@ -1,5 +1,6 @@
 *.dat
 *.pyc
+*.lock
 haikucreds.py
 .DS_Store
 sleeptest.py

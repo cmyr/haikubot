@@ -176,6 +176,8 @@ class HaikuBot(object):
 
     def _get_source(self):
 
+        from stat import ST_CTIME
+
         ls = (os.path.join(DATA_SOURCE_DIR, i) for i in os.listdir(DATA_SOURCE_DIR))
         ls = ((os.stat(path), path) for path in ls) 
         ls = ((stat[ST_CTIME], path) for stat, path in ls)

@@ -140,7 +140,7 @@ class HaikuBot(object):
             return False
         if re.search(r'[0-9]', line):
             return False
-        if s.find('#'):
+        if line.find('#'):
             return False
         # if re.search(r'\n', line.strip()):
         #     return False
@@ -222,7 +222,7 @@ class HaikuBot(object):
             post_time = self.shared_data['last_post']
         except KeyError:
             pass
-        
+
         self._close_datasource()
         return post_time
 
@@ -305,17 +305,17 @@ def simple_gui(model):
                 model.remove(h)
                 break
             elif inp.lower() in ['q']:
+
+                print('approved %d/%d in %s' % (
+                    approved_count,
+                    seen_count,
+                    format_seconds(time.time() - start_time)))
                 return
         try:
             h = to_review.next()
             seen_count += 1
         except StopIteration:
             h = None
-
-    print('approved %d/%d in %s' % (
-        approved_count,
-        seen_count,
-        format_seconds(time.time() - start_time)))
 
 
 def format_seconds(seconds):

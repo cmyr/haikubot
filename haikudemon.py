@@ -42,10 +42,15 @@ class HaikuDemon(object):
         self.warning_level = 0
 
     def run(self):
-        self._check_post_time()
-        while True:
-            self.entertain_the_huddled_masses()
-            self.sleep(self.post_interval)
+        try:
+            self._check_post_time()
+            while True:
+                self.entertain_the_huddled_masses()
+                self.sleep(self.post_interval)
+
+        except KeyboardInterrupt:
+            print('exiting')
+            sys.exit(0)
 
     def _check_post_time(self):
         last_post = self.datasource.last_post()

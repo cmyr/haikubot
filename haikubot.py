@@ -140,7 +140,7 @@ class HaikuBot(object):
             return False
         if re.search(r'[0-9]', line):
             return False
-        if line.find('#') > 0:
+        if line.find('#') != -1:
             return False
         if re.search(r'oomf', line.lower()):
             return False
@@ -271,7 +271,7 @@ class HaikuBot(object):
         return haiku
 
     def post_failed(self, haiku):
-        self._open_datasource()
+        self._open_da2tasource()
         self.shared_data['to_post'].remove(haiku)
         haiku['status'] = HAIKU_STATUS_FAILED
         self.shared_data['processed'].append(haiku)

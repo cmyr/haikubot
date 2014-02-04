@@ -10,6 +10,7 @@ import time
 
 import anydbm
 import poetryutils
+import poetryutils2
 
 
 HAIKU_REVIEW_FILE = 'haikureview.dat'
@@ -27,7 +28,7 @@ class HaikuBot(object):
 
     """
     you twitter poets
-    beauty is your lost verses
+    beauty of your lost verses
     I find them. save them.
     """
 
@@ -80,7 +81,8 @@ class HaikuBot(object):
             if not len(self.review):
                 if not source:
                     source = self._get_source()
-                lines = self._extract_lines(source)
+                filters = self._setup_filters()
+                lines = self._extract_lines(source, filters)
                 self.review = self._generate_haiku(lines)
             if review:
                 simple_gui(self)
@@ -104,9 +106,9 @@ class HaikuBot(object):
 
         # these are tuples, now
         fives = [(x, y)
-                 for x, y in lines if poetryutils.count_syllables(x) == 5]
+                 for x, y in lines if poetryutils2.count_syllables(x) == 5]
         sevens = [(x, y)
-                  for x, y in lines if poetryutils.count_syllables(x) == 7]
+                  for x, y in lines if poetryutils2.count_syllables(x) == 7]
 
         del lines
 
@@ -148,11 +150,23 @@ class HaikuBot(object):
             return False
         return True
 
+    def _setup_filters(self):
+        filters = []
+        filters.append(poetryutils2.filters.numeral_filter)
+        filters.append(poetryutils2.filters.url_filter)
+        filters.append(poetryutils2.filters.ascii_filter)
+        filters.append(poetryutils2.filters.low_letter_filter(0.9))
+        filters.append(poetryutils2.filters.real_word_ratio_filter(0.8))
+        filters.append(poetryutils2.filters.syllable_count_filter('5,7'))
+        return filters
+
+
     def _refilter_haiku(self, debug=False):
 
         if not acquire_lock():
             print('failed to acquire lock')
             return
+        filters = self._setup_filters()
         try:
             print('refiltering haiku')
             seen = 0
@@ -161,7 +175,7 @@ class HaikuBot(object):
             for h in self.review:
                 seen += 1
                 lines = h['text'].splitlines()
-                results = map(self._filter_line, lines)
+                lines = [poetryutils2.filter_line(l, filters) for l in lines]
                 if False in lines:
                     fails.append(h)
                     count += 1
@@ -196,29 +210,34 @@ class HaikuBot(object):
         print('working from source %s' % source)
         return source
 
-    def _extract_lines(self, source):
-        print('extracting lines')
-        lines = []
-        db = gdbm.open(source)
-        k = db.firstkey()
-        seen = 0
-        prevk = k
-        while k is not None:
-            seen += 1
-            prevk = k
-            try:
-                line = _tweet_from_dbm(db[k])
-                if self._filter_line(line['text']):
-                    lines.append(line)
-            except ValueError:
-                k = db.nextkey(k)
-                continue
-            sys.stdout.write('seen: %i\r' % seen)
-            sys.stdout.flush()
+    def _extract_lines(self, source, filters):
+        source = gdbm_iterator(source)
+        line_iter = poetryutils2.get_lines(source, filters, 'text')
+        return [(l['text'], l['id']) for l in line_iter]
 
-            k = db.nextkey(k)
-        db.close()
-        return [(l['text'], l['id']) for l in lines]
+        # print('extracting lines')
+        # lines = []
+        # db = gdbm.open(source)
+        # k = db.firstkey()
+        # seen = 0
+        # prevk = k
+        # while k is not None:
+        #     seen += 1
+        #     prevk = k
+        #     try:
+        #         line = _tweet_from_dbm(db[k])
+        #         if self._filter_line(line['text']):
+        #             lines.append(line)
+        #     except ValueError:
+        #         k = db.nextkey(k)
+        #         continue
+        #     sys.stdout.write('seen: %i\r' % seen)
+        #     sys.stdout.flush()
+
+        #     k = db.nextkey(k)
+        # db.close()
+        # return [(l['text'], l['id']) for l in lines]
+
 
 # things below this are related to the 'public API' our daemon
 # uses to find and post and confirm posting, etc
@@ -284,6 +303,21 @@ class HaikuBot(object):
         haiku['status'] = HAIKU_STATUS_POSTED
         self.shared_data['processed'].append(haiku)
         self._close_datasource()
+
+
+def gdbm_iterator(dbpath):
+    db = gdbm.open(dbpath)
+    k = db.firstkey()
+    while k:
+        try:
+            yield _tweet_from_dbm(db[k])
+        except ValueError:
+            k = db.nextkey(k)
+            continue
+        k = db.nextkey(k)
+
+    db.close()
+    raise StopIteration
 
 
 def _tweet_from_dbm(dbm_tweet):

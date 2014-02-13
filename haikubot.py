@@ -291,7 +291,7 @@ class HaikuBot(object):
         return haiku
 
     def post_failed(self, haiku):
-        self._open_da2tasource()
+        self._open_datasource()
         self.shared_data['to_post'].remove(haiku)
         haiku['status'] = HAIKU_STATUS_FAILED
         self.shared_data['processed'].append(haiku)

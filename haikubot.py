@@ -213,7 +213,7 @@ class HaikuBot(object):
 
     def _extract_lines(self, source, filters):
         source = gdbm_iterator(source)
-        line_iter = poetryutils2.get_lines(source, filters, 'text')
+        line_iter = poetryutils2.line_iter(source, filters, 'text')
         return [(l['text'], l['id']) for l in line_iter]
 
         # print('extracting lines')
@@ -365,6 +365,7 @@ def simple_gui(model):
             h = to_review.next()
             seen_count += 1
         except StopIteration:
+            print('finished review')
             h = None
 
 

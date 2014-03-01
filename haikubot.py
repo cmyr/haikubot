@@ -157,7 +157,7 @@ class HaikuBot(object):
         filters.append(poetryutils2.filters.ascii_filter)
         filters.append(poetryutils2.filters.low_letter_filter(0.9))
         filters.append(poetryutils2.filters.swears_filter())
-        filters.append(poetryutils2.filters.real_word_ratio_filter(0.85))
+        filters.append(poetryutils2.filters.real_word_ratio_filter(0.9))
         filters.append(poetryutils2.filters.syllable_count_filter('5,7'))
         return filters
 

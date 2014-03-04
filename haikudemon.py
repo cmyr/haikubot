@@ -191,6 +191,7 @@ class HaikuDemon(object):
         elif good_until < 168 * 60 * 60 and self.warning_level < 1:
             message = 'One week: ' + message
             should_post = True
+            self.warning_level = 1
         elif good_until > 168 * 60 * 60:
             self.warning_level = 0
 

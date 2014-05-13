@@ -39,9 +39,17 @@ def twitter_stream_source():
     stream = streamer.stream_iter(
         languages=['en'],
         user_agent="@haiku9000",
-        just_text=True
         )
-    return stream
+
+    def item_stripper(stream_iter):
+        keys = ['text', 'user']
+        for item in stream_iter:
+            stripped_item = dict()
+            for k in keys:
+                stripped_item[k] = item.get(k)
+            yield stripped_item
+
+    return item_stripper(stream):
 
 def haiku_test():
     generate_haiku()

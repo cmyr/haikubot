@@ -20,6 +20,9 @@ def generate_haiku():
     for beauty in haikuer.generate_from_keyed_source(source, key='text'):
         yield format_haiku(beauty)
 
+def a_solitary_poem():
+    gen = generate_haiku()
+    return gen.next()
 
 def init_filters():
     filters = []

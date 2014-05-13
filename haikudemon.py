@@ -11,7 +11,9 @@ from twitter.oauth import OAuth
 from twitter.stream import TwitterStream
 from twitter.api import Twitter, TwitterError, TwitterHTTPError
 
-import haikubot
+# import haikubot
+import haikuwriter
+
 from haikucreds import (CONSUMER_KEY, CONSUMER_SECRET,
                         ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
 
@@ -29,7 +31,6 @@ class HaikuDemon(object):
 
     def __init__(self, post_interval=POST_INTERVAL, debug=False):
         super(HaikuDemon, self).__init__()
-        self.datasource = haikubot.HaikuBot(review=False)
         self._debug = debug
         self.post_interval = post_interval * 60
         self.twitter = twitter = Twitter(
@@ -38,8 +39,6 @@ class HaikuDemon(object):
                        CONSUMER_KEY,
                        CONSUMER_SECRET),
             api_version='1.1')
-        self.sent_warnings = (False, False, False)
-        self.warning_level = 0
 
     def run(self):
         try:
@@ -62,50 +61,9 @@ class HaikuDemon(object):
             self.sleep(self.post_interval - temps_perdu)
 
     def entertain_the_huddled_masses(self):
+        haiku = haikuwriter.a_solitary_poem()
+        self.post(haiku)
 
-        count = self.datasource.count()
-        self._check_count(count)
-        print('datasource count = %d' % count)
-        if not count:
-            return
-
-        haiku = self.datasource.haiku_for_post()
-        formatted_haiku = self.format_haiku(haiku)
-
-        if formatted_haiku and self.post(formatted_haiku):
-            self.datasource.post_succeeded(haiku)
-        else:
-            self.datasource.post_failed(haiku)
-            self.entertain_the_huddled_masses()
-
-    def format_haiku(self, haiku):
-        try:
-            if not self._debug:
-                usernames = self.get_user_names(haiku['tweets'])
-            else:
-                usernames = ('user1', 'user2', 'user3')
-
-            usernames = ['@%s' % n for n in usernames]
-            usernames_string = u'– ' + ' / '.join(usernames)
-            formatted_haiku = '%s\n\n%s' % (haiku['text'], usernames_string)
-            return formatted_haiku
-
-        except TwitterError as err:
-            response = json.JSONDecoder().decode(err.response_data)
-            response = response.get('errors')
-            print(response)
-            return None
-
-    def get_user_names(self, tweets):
-        usernames = []
-        for t in tweets:
-            tweet = self.twitter.statuses.show(
-                id=str(t),
-                include_entities='false')
-            if tweet:
-                usernames.append(tweet.get('user').get('screen_name'))
-
-        return usernames
 
     def post(self, formatted_haiku):
         if self._debug:
@@ -151,7 +109,7 @@ class HaikuDemon(object):
 
         while interval > 0:
             sleep_status = ' %s remaining \r' % (
-                haikubot.format_seconds(interval))
+            format_seconds(interval))
             sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
             time.sleep(sleep_chunk)
@@ -159,48 +117,26 @@ class HaikuDemon(object):
 
         print('\n')
 
-    def send_dm(self, message):
-        """sends me a DM if I'm running out of haiku"""
-        try:
-            self.twitter.direct_messages.new(user=BOSS_USERNAME, text=message)
-        except TwitterError as err:
-            print(err)
+    # def send_dm(self, message):
+    #     """sends me a DM if I'm running out of haiku"""
+    #     try:
+    #         self.twitter.direct_messages.new(user=BOSS_USERNAME, text=message)
+    #     except TwitterError as err:
+    #         print(err)
 
-    def _check_count(self, count):
-        """checks to see if we're close to running out of haiku to tweet"""
-
-        good_until = count * self.post_interval
-        message = 'haikubot will run out of haiku in %s' % haikubot.format_seconds(
-            good_until)
-        should_post = False
-        if good_until == 0 and self.warning_level < 4:
-            message = 'EMPTY!'
-            should_post = True
-            self.warning_level = 4
-        elif good_until > 0 and self.warning_level == 4:
-            self.warning_level = 0
-
-        if good_until < 24 * 60 * 60 and self.warning_level < 3:
-            message = 'ONE DAY: ' + message
-            should_post = True
-            self.warning_level = 3
-        elif good_until < 72 * 60 * 60 and self.warning_level < 2:
-            message = 'Three days: ' + message
-            should_post = True
-            self.warning_level = 2
-        elif good_until < 168 * 60 * 60 and self.warning_level < 1:
-            message = 'One week: ' + message
-            should_post = True
-            self.warning_level = 1
-        elif good_until > 168 * 60 * 60:
-            self.warning_level = 0
-
-        # this... is not my proudest hour
-        if should_post:
-            if self._debug:
-                print(message)
-            else:
-                self.send_dm(message)
+def format_seconds(seconds):
+    """
+    convert a number of seconds into a custom string representation
+    """
+    d, seconds = divmod(seconds, (60 * 60 * 24))
+    h, seconds = divmod(seconds, (60 * 60))
+    m, seconds = divmod(seconds, 60)
+    time_string = ("%im %0.2fs" % (m, seconds))
+    if h or d:
+        time_string = "%ih %s" % (h, time_string)
+    if d:
+        time_string = "%id %s" % (d, time_string)
+    return time_string
 
 
 def main():

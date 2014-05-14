@@ -18,7 +18,7 @@ from haikucreds import (CONSUMER_KEY, CONSUMER_SECRET,
                         ACCESS_KEY, ACCESS_SECRET, BOSS_USERNAME)
 
 
-POST_INTERVAL = 240
+POST_INTERVAL = 60
 
 
 class HaikuDemon(object):
@@ -42,7 +42,7 @@ class HaikuDemon(object):
 
     def run(self):
         try:
-            self._check_post_time()
+            # self._check_post_time()
             while True:
                 self.entertain_the_huddled_masses()
                 self.sleep(self.post_interval)
@@ -51,14 +51,14 @@ class HaikuDemon(object):
             print('exiting')
             sys.exit(0)
 
-    def _check_post_time(self):
-        last_post = self.datasource.last_post()
-        temps_perdu = time.time() - last_post
-        if last_post and temps_perdu < (self.post_interval / 2):
-            print('skipping post. %d elapsed, post_interval %d' %
-                  (temps_perdu, self.post_interval))
+    # def _check_post_time(self):
+    #     # last_post = self.datasource.last_post()
+    #     temps_perdu = time.time() - last_post
+    #     if last_post and temps_perdu < (self.post_interval / 2):
+    #         print('skipping post. %d elapsed, post_interval %d' %
+    #               (temps_perdu, self.post_interval))
 
-            self.sleep(self.post_interval - temps_perdu)
+    #         self.sleep(self.post_interval - temps_perdu)
 
     def entertain_the_huddled_masses(self):
         haiku = haikuwriter.a_solitary_poem()

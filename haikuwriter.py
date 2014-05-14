@@ -11,7 +11,7 @@ def generate_haiku():
 
     filters = init_filters()
     stream_source = twitter_stream_source()
-    source = poetryutils2.line_iter(stream_source, filters, line_key='text')
+    source = poetryutils2.line_iter(stream_source, filters, key='text')
 
     # source = poetryutils2.line_iter(debug_dict_wrapper(debug_source()),
     #     filters,

@@ -78,7 +78,7 @@ def format_haiku(haiku):
         haiku_text = [h.get('text') for h in haiku]
         haiku_text = '\n'.join(haiku_text)
 
-        haiku_usernames = ['@%s' % h.get('user').get('screen_name') for h in haiku]
+        haiku_usernames = ['(@)%s' % h.get('user').get('screen_name') for h in haiku]
         haiku_usernames = '— ' + ' / '.join(haiku_usernames)
 
         return "%s\n\n%s" % (haiku_text, haiku_usernames)

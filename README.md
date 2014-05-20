@@ -1,8 +1,22 @@
-haikubot
+@haiku9000
 ========
 
-a little bot that assembles haiku from tweets
+[@haiku9000](http://twitter.com/haiku9000) is a little bot that combines tweets from the twitter stream into a haiku, and tweets the results, like this:
 
-requires my poetryutils package, for syllable counting and mike verdone's python twitter tools for tweeting.
+Guess no gym again  
+Yeah, got some game from my dad  
+Designer cat food
 
-This bot was purpose built to accompany @anagramatron (http://www.gihub.com/cmyr/anagramatron).
+— (@)Dnycetns / (@)Scrplyr91 / (@)psychedelics
+
+```I Lost My Stuff Now
+This place is very quiet
+My stomach growling.
+
+— (@)VeeDot15 / (@)fancyeye / (@)ImHerFrancito```
+
+It is built on top of [poetryutils 2.0](https://github.com/cmyr/poetryutils2). 
+
+requires my poetryutils package, for syllable counting and mike verdone's [python twitter tools](http://mike.verdone.ca/twitter/) for sending tweets.
+
+

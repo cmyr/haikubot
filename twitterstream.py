@@ -11,6 +11,10 @@ import logging
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.WARNING)
 
+class StreamConnectionError(Exception):
+    """our streaming connection didn't fire"""
+    pass
+
 class TwitterStream(object):
     """
     very basic single-purpose object for connecting to the streaming API
@@ -51,19 +55,25 @@ class TwitterStream(object):
             query_params['language'] = lang_string
         if stall_warnings:
             query_params['stall_warnings'] = True
+        try:    
+            stream_connection = requests.get(url, auth=auth, stream=True,
+                                             params=query_params, headers=query_headers)
+        except requests.exceptions.ConnectionError as err:
+            raise StreamConnectionError()
 
-        stream_connection = requests.get(url, auth=auth, stream=True,
-                                         params=query_params, headers=query_headers)
+
         
 
         def de_json(an_iterator):
             for json_item in an_iterator:
+                if not json_item:
+                    continue
                 try:
                     item = json.loads(json_item)
                     if item.get('text'):
                         yield item
                 except ValueError:
-                    print('value error decoding json %s', json_item)
+                    print('value error decoding json %s' % json_item)
 
 
         if not just_text:

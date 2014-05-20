@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import poetryutils2
 import twitterstream
+import time
 
 def generate_haiku():
     haikuer = poetryutils2.Haikuer()
@@ -58,10 +59,19 @@ def debug_dict_wrapper(an_iter):
 
 def twitter_stream_source():
     streamer = twitterstream.TwitterStream()
-    stream = streamer.stream_iter(
-        languages=['en'],
-        user_agent="@haiku9000",
-        )
+    stream = None
+    
+    while True:
+        try:
+            stream = streamer.stream_iter(
+                languages=['en'],
+                user_agent="@haiku9000",
+                )
+            break
+        except StreamConnectionError as err:
+            print('failed to acquire connection, will retry in 5 min')
+            time.sleep(60*5)
+
 
     def item_stripper(stream_iter):
         keys = ['text', 'user']

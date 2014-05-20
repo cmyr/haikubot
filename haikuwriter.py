@@ -68,7 +68,7 @@ def twitter_stream_source():
                 user_agent="@haiku9000",
                 )
             break
-        except StreamConnectionError as err:
+        except twitterstream.StreamConnectionError as err:
             print('failed to acquire connection, will retry in 5 min')
             time.sleep(60*5)
 

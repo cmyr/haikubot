@@ -86,7 +86,6 @@ class TwitterStream(object):
             return text_stripper(de_json(stream_connection.iter_lines()))
 
 
-# TODO: MERGE ME BACK INTO MAIN STREAM CLASS
 if __name__ == '__main__':
     anagram_stream = TwitterStream(CONSUMER_KEY, CONSUMER_SECRET,
                                    ACCESS_KEY, ACCESS_SECRET)

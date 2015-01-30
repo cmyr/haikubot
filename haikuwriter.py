@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import poetryutils2
+import zmqstream
 import twitterstream
 import time
 
@@ -11,12 +12,9 @@ def generate_haiku():
 
 
     filters = init_filters()
-    stream_source = twitter_stream_source()
+    stream_source = zmq_stream_source()
     source = poetryutils2.line_iter(stream_source, filters, key='text')
 
-    # source = poetryutils2.line_iter(debug_dict_wrapper(debug_source()),
-    #     filters,
-    #     line_key='text')
 
     for beauty in haikuer.generate_from_keyed_source(source, key='text'):
         yield format_haiku(beauty)
@@ -57,31 +55,37 @@ def debug_dict_wrapper(an_iter):
         yield wrapped
         num += 1
 
-def twitter_stream_source():
-    streamer = twitterstream.TwitterStream()
-    stream = None
-    
-    while True:
-        try:
-            stream = streamer.stream_iter(
-                languages=['en'],
-                user_agent="@haiku9000",
-                )
-            break
-        except twitterstream.StreamConnectionError as err:
-            print('failed to acquire connection, will retry in 5 min')
-            time.sleep(60*5)
-
-
-    def item_stripper(stream_iter):
-        keys = ['text', 'user']
-        for item in stream_iter:
-            stripped_item = dict()
-            for k in keys:
-                stripped_item[k] = item.get(k)
-            yield stripped_item
-
+def zmq_stream_source():
+    stream = zmqstream.zmq_iter()
     return item_stripper(stream)
+
+# def twitter_stream_source():
+#     streamer = twitterstream.TwitterStream()
+#     stream = None
+    
+#     while True:
+#         try:
+#             stream = streamer.stream_iter(
+#                 languages=['en'],
+#                 user_agent="@haiku9000",
+#                 )
+#             break
+#         except twitterstream.StreamConnectionError as err:
+#             print('failed to acquire connection, will retry in 5 min')
+#             time.sleep(60*5)
+
+#     return item_stripper(stream)
+
+
+def item_stripper(stream_iter):
+    keys = ['text', 'user']
+    for item in stream_iter:
+        stripped_item = dict()
+        for k in keys:
+            stripped_item[k] = item.get(k)
+        yield stripped_item
+
+
 
 def format_haiku(haiku):
     try:

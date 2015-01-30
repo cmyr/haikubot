@@ -153,7 +153,6 @@ def main():
     kwargs['post_interval'] = args.post_interval or POST_INTERVAL
 
     print(kwargs)
-    print(type(kwargs['post_interval']))
 
     daemon = HaikuDemon(**kwargs)
     return daemon.run()

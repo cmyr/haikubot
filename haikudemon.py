@@ -51,19 +51,9 @@ class HaikuDemon(object):
             print('exiting')
             sys.exit(0)
 
-    # def _check_post_time(self):
-    #     # last_post = self.datasource.last_post()
-    #     temps_perdu = time.time() - last_post
-    #     if last_post and temps_perdu < (self.post_interval / 2):
-    #         print('skipping post. %d elapsed, post_interval %d' %
-    #               (temps_perdu, self.post_interval))
-
-    #         self.sleep(self.post_interval - temps_perdu)
-
     def entertain_the_huddled_masses(self):
         haiku = haikuwriter.a_solitary_poem()
         self.post(haiku)
-
 
     def post(self, formatted_haiku):
         if self._debug:
@@ -109,7 +99,7 @@ class HaikuDemon(object):
 
         while interval > 0:
             sleep_status = ' %s remaining \r' % (
-            format_seconds(interval))
+                format_seconds(interval))
             sys.stdout.write(sleep_status.rjust(35))
             sys.stdout.flush()
             time.sleep(sleep_chunk)
@@ -117,12 +107,6 @@ class HaikuDemon(object):
 
         print('\n')
 
-    # def send_dm(self, message):
-    #     """sends me a DM if I'm running out of haiku"""
-    #     try:
-    #         self.twitter.direct_messages.new(user=BOSS_USERNAME, text=message)
-    #     except TwitterError as err:
-    #         print(err)
 
 def format_seconds(seconds):
     """

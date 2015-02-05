@@ -129,7 +129,6 @@ def main():
         setproctitle.setproctitle('haikudemon')
     except ImportError:
         print("missing module: setproctitle")
-        pass
 
     import argparse
     parser = argparse.ArgumentParser()

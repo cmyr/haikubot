@@ -124,6 +124,13 @@ def format_seconds(seconds):
 
 
 def main():
+    try:
+        import setproctitle
+        setproctitle.setproctitle('haikudemon')
+    except ImportError:
+        print("missing module: setproctitle")
+        pass
+
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--post-interval', type=int,

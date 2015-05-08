@@ -6,17 +6,20 @@ import poetryutils2
 import zmqstream
 import twitterstream
 import time
+import sys
 
-def generate_haiku():
-    haikuer = poetryutils2.Haikuer()
 
+def generate_haiku(debug=False, verbose=False):
+    haikuer = poetryutils2.Haikuer(debug=(debug or verbose))
 
     filters = init_filters()
-    stream_source = zmq_stream_source()
-    source = poetryutils2.line_iter(stream_source, filters, key='text')
+    if not debug:
+        stream_source = zmq_stream_source()
+        source = poetryutils2.line_iter(stream_source, filters, key='text')
+    else:
+        source = debug_dict_wrapper(debug_source())
 
-
-    for beauty in haikuer.generate_from_keyed_source(source, key='text'):
+    for beauty in haikuer.generate_from_source(source, key='text'):
         yield format_haiku(beauty)
 
 def a_solitary_poem():
@@ -59,24 +62,6 @@ def zmq_stream_source():
     stream = zmqstream.zmq_iter()
     return item_stripper(stream)
 
-# def twitter_stream_source():
-#     streamer = twitterstream.TwitterStream()
-#     stream = None
-    
-#     while True:
-#         try:
-#             stream = streamer.stream_iter(
-#                 languages=['en'],
-#                 user_agent="@haiku9000",
-#                 )
-#             break
-#         except twitterstream.StreamConnectionError as err:
-#             print('failed to acquire connection, will retry in 5 min')
-#             time.sleep(60*5)
-
-#     return item_stripper(stream)
-
-
 def item_stripper(stream_iter):
     keys = ['text', 'user']
     for item in stream_iter:
@@ -89,10 +74,10 @@ def item_stripper(stream_iter):
 
 def format_haiku(haiku):
     try:
-        haiku_text = [h.get('text') for h in haiku]
+        haiku_text = [h.info.get('text') for h in haiku]
         haiku_text = '\n'.join(haiku_text)
 
-        haiku_usernames = ['(@)%s' % h.get('user').get('screen_name') for h in haiku]
+        haiku_usernames = ['(@)%s' % h.info.get('user').get('screen_name') for h in haiku]
         haiku_usernames = '— ' + ' / '.join(haiku_usernames)
 
         return "%s\n\n%s" % (haiku_text, haiku_usernames)
@@ -101,14 +86,14 @@ def format_haiku(haiku):
         print(haiku)
 
 
-def haiku_test():
-    for poem in generate_haiku():
-        print(format_haiku(poem))
+def haiku_test(debug):
+    for poem in generate_haiku(debug=debug, verbose=True):
+        print(poem)
 
 
 
 def main():
-    haiku_test()
+    haiku_test(False)
 
 
 

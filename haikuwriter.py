@@ -59,7 +59,7 @@ def debug_dict_wrapper(an_iter):
         num += 1
 
 def zmq_stream_source():
-    stream = zmqstream.zmq_iter()
+    stream = zmqstream.zmq_iter(require_auth=True)
     return item_stripper(stream)
 
 def item_stripper(stream_iter):
